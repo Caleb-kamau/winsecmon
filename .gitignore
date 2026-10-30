@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+# Local configuration and anything produced from real event data
+winsecmon.toml
+winsecmon-report*.html
+*.evtx
+exports/
+*.csv
+*.json
+report*.html
+*.csv
+*.json
+report*.html

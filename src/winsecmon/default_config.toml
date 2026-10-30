@@ -1,0 +1,268 @@
+# winsecmon configuration
+#
+# Copy this file to winsecmon.toml (or run `winsecmon init-config winsecmon.toml`)
+# and edit it. Settings you omit fall back to the values shown here.
+#
+# Config lookup order: --config FILE, %WINSECMON_CONFIG%, .\winsecmon.toml,
+# %APPDATA%\winsecmon\winsecmon.toml, then these built-in defaults.
+#
+# This file only controls what is READ and how it is displayed. winsecmon never
+# changes audit policy, never clears logs and never sends data anywhere.
+
+[general]
+log_name = "Security"            # channel to read
+backend = "wevtutil"             # "wevtutil" (built in) or "powershell" (Get-WinEvent)
+default_lookback = "24h"         # used when no --since/--start is given (live log only)
+max_events = 5000                # upper bound on events read per run (1 - 200000)
+query_timeout_seconds = 120      # give up on a single Windows query after this long
+display_timezone = "local"       # "local" or "utc" (exports are always UTC)
+
+[filters]
+# Accounts to hide by default (case-insensitive, * and ? wildcards). Matched against
+# the account an event is primarily about. Pass --no-exclude to show them anyway.
+# The number of hidden events is always reported.
+exclude_users = ["DWM-*", "UMFD-*"]
+
+[summary]
+top_n = 10                       # rows in "top accounts / computers / sources"
+failed_logon_threshold = 5       # failed logons from one account or address that get highlighted
+
+[report]
+title = "Windows Security Event Report"
+max_events_shown = 200           # newest events listed in the HTML report
+
+# ---------------------------------------------------------------------------
+# Monitored events. If you define [[events]] in your own file, your list
+# REPLACES this one entirely. Set enabled = false to keep an entry but skip it.
+# severity: info | low | medium | high | critical
+# Windows does not assign severities to Security events; these are triage
+# hints chosen here, so change them to match your environment.
+# ---------------------------------------------------------------------------
+
+# --- Authentication -------------------------------------------------------
+[[events]]
+id = 4624
+name = "Successful logon"
+category = "authentication"
+severity = "info"
+description = "An account logged on successfully."
+
+[[events]]
+id = 4625
+name = "Failed logon"
+category = "authentication"
+severity = "medium"
+description = "An account failed to log on."
+
+[[events]]
+id = 4648
+name = "Logon with explicit credentials"
+category = "authentication"
+severity = "low"
+description = "A process logged on using explicitly supplied credentials (runas, scheduled tasks, lateral movement tools)."
+
+[[events]]
+id = 4740
+name = "Account locked out"
+category = "authentication"
+severity = "high"
+description = "A user account was locked out."
+
+[[events]]
+id = 4767
+name = "Account unlocked"
+category = "authentication"
+severity = "low"
+description = "A user account was unlocked."
+
+[[events]]
+id = 4776
+name = "NTLM credential validation"
+category = "authentication"
+severity = "low"
+enabled = false                  # mostly useful on domain controllers; noisy
+description = "The computer attempted to validate credentials for an account (NTLM)."
+
+[[events]]
+id = 4634
+name = "Logoff"
+category = "authentication"
+severity = "info"
+enabled = false                  # very noisy
+description = "An account was logged off."
+
+# --- Account management ---------------------------------------------------
+[[events]]
+id = 4720
+name = "User account created"
+category = "account_management"
+severity = "medium"
+description = "A user account was created."
+
+[[events]]
+id = 4722
+name = "User account enabled"
+category = "account_management"
+severity = "low"
+description = "A user account was enabled."
+
+[[events]]
+id = 4723
+name = "Password change attempt"
+category = "account_management"
+severity = "low"
+description = "An attempt was made to change an account's password."
+
+[[events]]
+id = 4724
+name = "Password reset attempt"
+category = "account_management"
+severity = "medium"
+description = "An attempt was made to reset an account's password."
+
+[[events]]
+id = 4725
+name = "User account disabled"
+category = "account_management"
+severity = "medium"
+description = "A user account was disabled."
+
+[[events]]
+id = 4726
+name = "User account deleted"
+category = "account_management"
+severity = "medium"
+description = "A user account was deleted."
+
+[[events]]
+id = 4738
+name = "User account changed"
+category = "account_management"
+severity = "low"
+description = "A user account's properties were changed."
+
+# --- Group changes --------------------------------------------------------
+[[events]]
+id = 4728
+name = "Member added to global group"
+category = "group_changes"
+severity = "high"
+description = "A member was added to a security-enabled global group."
+
+[[events]]
+id = 4729
+name = "Member removed from global group"
+category = "group_changes"
+severity = "medium"
+description = "A member was removed from a security-enabled global group."
+
+[[events]]
+id = 4732
+name = "Member added to local group"
+category = "group_changes"
+severity = "high"
+description = "A member was added to a security-enabled local group (for example Administrators)."
+
+[[events]]
+id = 4733
+name = "Member removed from local group"
+category = "group_changes"
+severity = "medium"
+description = "A member was removed from a security-enabled local group."
+
+[[events]]
+id = 4756
+name = "Member added to universal group"
+category = "group_changes"
+severity = "high"
+description = "A member was added to a security-enabled universal group."
+
+[[events]]
+id = 4757
+name = "Member removed from universal group"
+category = "group_changes"
+severity = "medium"
+description = "A member was removed from a security-enabled universal group."
+
+[[events]]
+id = 4731
+name = "Local group created"
+category = "group_changes"
+severity = "medium"
+description = "A security-enabled local group was created."
+
+[[events]]
+id = 4734
+name = "Local group deleted"
+category = "group_changes"
+severity = "medium"
+description = "A security-enabled local group was deleted."
+
+# --- Privilege use --------------------------------------------------------
+[[events]]
+id = 4672
+name = "Special privileges assigned"
+category = "privilege_use"
+severity = "low"
+description = "Special privileges (for example SeDebugPrivilege) were assigned to a new logon."
+
+[[events]]
+id = 4673
+name = "Privileged service called"
+category = "privilege_use"
+severity = "low"
+description = "A privileged service was called. Only logged if 'Sensitive Privilege Use' auditing is on."
+
+[[events]]
+id = 4674
+name = "Privileged object operation"
+category = "privilege_use"
+severity = "low"
+description = "An operation was attempted on a privileged object. Only logged if 'Sensitive Privilege Use' auditing is on."
+
+# --- Audit log and audit policy changes -----------------------------------
+[[events]]
+id = 1102
+name = "Audit log cleared"
+category = "audit_changes"
+severity = "critical"
+description = "The Security audit log was cleared."
+
+[[events]]
+id = 4719
+name = "System audit policy changed"
+category = "audit_changes"
+severity = "high"
+description = "The system audit policy was changed."
+
+[[events]]
+id = 4912
+name = "Per-user audit policy changed"
+category = "audit_changes"
+severity = "high"
+description = "The per-user audit policy was changed."
+
+# --- Optional extras (disabled by default) --------------------------------
+[[events]]
+id = 4688
+name = "Process created"
+category = "process"
+severity = "info"
+enabled = false                  # very noisy; needs 'Process Creation' auditing
+description = "A new process was created."
+
+[[events]]
+id = 4697
+name = "Service installed"
+category = "system_changes"
+severity = "medium"
+enabled = false
+description = "A service was installed on the system."
+
+[[events]]
+id = 4698
+name = "Scheduled task created"
+category = "system_changes"
+severity = "medium"
+enabled = false
+description = "A scheduled task was created."
